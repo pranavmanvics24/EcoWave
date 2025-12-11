@@ -1,0 +1,116 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useState } from "react";
+
+export default function SellItemPage() {
+    const [category, setCategory] = useState("");
+    const [condition, setCondition] = useState("");
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent via-background to-muted p-4">
+            <div className="container mx-auto px-4 py-8">
+                <Card className="max-w-2xl mx-auto">
+                    <CardHeader>
+                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                            Sell an Item
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <form className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="productName">Product Name</Label>
+                                <Input id="productName" placeholder="Enter product name" required />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Description</Label>
+                                <Textarea id="description" placeholder="Describe your product" required />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select onValueChange={setCategory} value={category}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="electronics">Electronics</SelectItem>
+                                        <SelectItem value="clothing">Clothing</SelectItem>
+                                        <SelectItem value="books">Books</SelectItem>
+                                        <SelectItem value="home">Home</SelectItem>
+                                        <SelectItem value="accessories">Accessories</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="price">Price</Label>
+                                <Input id="price" type="number" placeholder="Enter price" required />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Condition</Label>
+                                <RadioGroup onValueChange={setCondition} value={condition}>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="new" id="new" />
+                                            <Label htmlFor="new">New</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="like-new" id="like-new" />
+                                            <Label htmlFor="like-new">Like New</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="good" id="good" />
+                                            <Label htmlFor="good">Good</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="fair" id="fair" />
+                                            <Label htmlFor="fair">Fair</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="poor" id="poor" />
+                                            <Label htmlFor="poor">Poor</Label>
+                                        </div>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="images">Upload Images</Label>
+                                <div className="flex items-center">
+                                    <Button asChild>
+                                        <label htmlFor="images" className="cursor-pointer">
+                                            Choose Files
+                                        </label>
+                                    </Button>
+                                    <Input id="images" type="file" multiple className="hidden" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="location">Location</Label>
+                                <Input id="location" placeholder="Enter your city" />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="contact">Contact Info</Label>
+                                <Input id="contact" type="email" placeholder="Enter your email" required />
+                            </div>
+
+                            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                                List Item
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}

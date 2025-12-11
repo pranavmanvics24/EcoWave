@@ -8,6 +8,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import SellItemPage from "./pages/SellItemPage";
+import ProductDetailPage from "./pages/ProductDetail"; // Import your new page
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/sell" element={<SellItemPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} /> {/* Add this line */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -20,6 +20,7 @@ const ProductCard = ({ image, title, price, badge, onBuyNow }) => {
         )}
         <h3 className="font-semibold text-lg mb-2 text-foreground">{title}</h3>
         <p className="text-2xl font-bold text-primary">₹{price}</p>
+        <p>More{}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button 
