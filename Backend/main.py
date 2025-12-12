@@ -12,7 +12,6 @@ from pymongo import MongoClient, ASCENDING
 from dotenv import load_dotenv
 import jwt
 from authlib.integrations.flask_client import OAuth
-from SentimentPredictor import SentimentPredictor
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from dateutil.relativedelta import relativedelta 
@@ -22,7 +21,7 @@ load_dotenv()
 MONGODB_URI = os.getenv("MONGODB_URI")
 JWT_SECRET = os.getenv("SECRET_KEY", "dev_jwt_secret")
 JWT_EXP_SECONDS = int(os.getenv("JWT_EXP_SECONDS", 86400))
-FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:8080")
 PORT = int(os.getenv("PORT", 5000))
 
 app = Flask(__name__)
@@ -50,17 +49,8 @@ except Exception:
     app.logger.exception("Unable to read google.server_metadata (discovery may have failed)")
 
 def create_default_user(user_id: str) -> dict:
-    now = datetime.utcnow()
     user_doc = {
         "user_id": user_id,
-        "balance": 100000.0,
-        "portfolio": [],
-        "tradeHistory": [],
-        "badges": [],
-        "quizProgress": {},
-        "tokens": 0,
-        "created_at": now,
-        "updated_at": now
     }
     users_col.insert_one(user_doc)
     return user_doc
@@ -133,3 +123,6 @@ def auth_google_callback():
     jwt_token = create_jwt_for_user(user)
     redirect_url = FRONTEND_ORIGIN.rstrip("/") + "/invest?token=" + urllib_parse.quote(jwt_token)
     return redirect(redirect_url)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=PORT, debug=True)
