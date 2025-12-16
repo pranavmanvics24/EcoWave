@@ -8,7 +8,7 @@ const Landing = () => {
     <div className="min-h-screen flex flex-col">
       <div className="relative overflow-hidden bg-gradient-to-br from-accent via-background to-muted">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iIzBEOTQ4OCIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-40"></div>
-        
+
         <div className="container mx-auto px-4 py-20 relative">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -18,19 +18,19 @@ const Landing = () => {
                   <span className="text-sm font-medium text-secondary">Sustainable Shopping</span>
                 </div>
               </div>
-              
+
               <h1 className="text-5xl md:text-6xl font-bold leading-tight">
                 Buy, Sell, and{" "}
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Save the Planet
                 </span>
               </h1>
-              
+
               <p className="text-xl text-muted-foreground">
-                EcoWave is a marketplace for used and eco-friendly items, promoting reuse and reducing waste. 
+                EcoWave is a marketplace for used and eco-friendly items, promoting reuse and reducing waste.
                 Join thousands making a difference, one purchase at a time.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/register">
                   <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 group w-full sm:w-auto">
@@ -44,7 +44,7 @@ const Landing = () => {
                   </Button>
                 </Link>
               </div>
-              
+
               <div className="grid grid-cols-3 gap-4 pt-8">
                 <div className="text-center">
                   <div className="flex justify-center mb-2">
@@ -75,12 +75,12 @@ const Landing = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl transform rotate-3"></div>
-              <img 
-                src={heroImage} 
-                alt="Eco-friendly marketplace" 
+              <img
+                src={heroImage}
+                alt="Eco-friendly marketplace"
                 className="relative rounded-3xl shadow-2xl w-full"
               />
             </div>

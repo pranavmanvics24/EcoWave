@@ -12,9 +12,11 @@ from pymongo import MongoClient, ASCENDING
 from dotenv import load_dotenv
 import jwt
 from authlib.integrations.flask_client import OAuth
+# from SentimentPredictor import SentimentPredictor  # Not needed for products
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
-from dateutil.relativedelta import relativedelta 
+from dateutil.relativedelta import relativedelta
+import certifi 
 
 load_dotenv()
 
@@ -25,12 +27,21 @@ FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:8080")
 PORT = int(os.getenv("PORT", 5000))
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": [FRONTEND_ORIGIN]}})
+# Allow all origins for development to avoid CORS issues
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.secret_key = JWT_SECRET
 
-client = MongoClient(MONGODB_URI, tls=True, tlsAllowInvalidCertificates=False)
+
+client = MongoClient(
+    MONGODB_URI, 
+    tls=True, 
+    tlsAllowInvalidCertificates=False,
+    tlsCAFile=certifi.where()
+)
 db = client['userinfo']
 users_col = db['users']
+products_col = db['products']
+products_col.create_index([("created_at", ASCENDING)])
 
 oauth = OAuth(app)
 
@@ -97,6 +108,7 @@ def upsert_oauth_user(email: str, name: str = None, provider: str = "google", ex
             "portfolio": [],
             "tradeHistory": []
         }
+
     }
     users_col.update_one(query, update, upsert=True)
     user = users_col.find_one(query)
@@ -121,8 +133,83 @@ def auth_google_callback():
         return jsonify({"error": "No email returned"}), 400
     user = upsert_oauth_user(email=email, name=name, provider="google")
     jwt_token = create_jwt_for_user(user)
-    redirect_url = FRONTEND_ORIGIN.rstrip("/") + "/invest?token=" + urllib_parse.quote(jwt_token)
+    redirect_url = FRONTEND_ORIGIN.rstrip("/") + "/auth-callback?token=" + urllib_parse.quote(jwt_token)
     return redirect(redirect_url)
+
+# Product API Endpoints
+@app.route("/api/products", methods=["GET"])
+def get_products():
+    """Fetch all products from the database with optional filtering"""
+    try:
+        query = {}
+        
+        # Filter by Category
+        category = request.args.get("category")
+        if category and category != "all":
+            query["category"] = category
+            
+        # Filter by Search Text
+        search = request.args.get("search")
+        if search:
+            query["$or"] = [
+                {"title": {"$regex": search, "$options": "i"}},
+                {"description": {"$regex": search, "$options": "i"}}
+            ]
+
+        products = list(products_col.find(query, {"_id": 0}).sort("created_at", -1))
+        return jsonify({"success": True, "products": products}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching products: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/products/<product_id>", methods=["GET"])
+def get_product(product_id):
+    """Fetch a single product by ID"""
+    try:
+        product = products_col.find_one({"id": product_id}, {"_id": 0})
+        if not product:
+            return jsonify({"success": False, "error": "Product not found"}), 404
+        return jsonify({"success": True, "product": product}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching product {product_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/products", methods=["POST"])
+def create_product():
+    """Create a new product listing"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ["title", "description", "price", "badge", "image"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Missing field: {field}"}), 400
+        
+        # Generate unique ID
+        import uuid
+        product_id = str(uuid.uuid4())
+        
+        product = {
+            "id": product_id,
+            "title": data["title"],
+            "description": data["description"],
+            "price": float(data["price"]),
+            "badge": data["badge"],
+            "image": data["image"],
+            "category": data.get("category"),
+            "seller_id": data.get("seller_id", "anonymous"),
+            "created_at": datetime.utcnow(),
+            "status": "active"
+        }
+        
+        products_col.insert_one(product)
+        product.pop("_id", None)  # Remove MongoDB _id from response
+        
+        return jsonify({"success": True, "product": product}), 201
+    except Exception as e:
+        app.logger.error(f"Error creating product: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT, debug=True)

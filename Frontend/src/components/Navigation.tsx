@@ -1,12 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Waves } from "lucide-react";
+import { Waves, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Search } from "lucide-react";
-import { UserCircle } from "lucide-react";
+import { CartDrawer } from "./CartDrawer";
+import { useAuthStore } from "@/lib/store";
 
 const Navigation = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -14,7 +16,6 @@ const Navigation = ({ onSearch }) => {
       onSearch(searchTerm);
     }
   };
-  const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
 
@@ -30,41 +31,47 @@ const Navigation = ({ onSearch }) => {
               EcoWave
             </span>
           </Link>
+
           <form
             onSubmit={handleSearchSubmit}
-            className="flex items-center max-w-md w-full bg-muted rounded-full border border-border px-4 py-2 shadow-sm"
+            className="hidden md:flex items-center max-w-md w-full bg-muted rounded-full border border-border px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all"
           >
             <input
               type="text"
-              placeholder="Search products"
+              placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-grow bg-transparent outline-none placeholder:text-muted-foreground text-foreground"
+              className="flex-grow bg-transparent outline-none placeholder:text-muted-foreground text-foreground text-sm"
             />
-            <button type="submit" className="ml-2 text-secondary hover:text-secondary/80">
-              <Search className="h-5 w-5" />
+            <button type="submit" className="ml-2 text-muted-foreground hover:text-primary transition-colors">
+              <Search className="h-4 w-4" />
             </button>
           </form>
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/home"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive('/home') ? 'text-primary' : 'text-foreground'
-                }`}
-            >
-              Home
-            </Link>
+
+          <div className="flex items-center gap-4">
             <Link
               to="/sell"
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive('/marketplace') ? 'text-primary' : 'text-foreground'
+              className={`text-sm font-medium transition-colors hover:text-primary ${isActive('/sell') ? 'text-primary' : 'text-foreground'
                 }`}
             >
               Sell an item
             </Link>
-            <div className="md:flex items-center gap-4">
-              <Link to="/profile" className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity">
-                <UserCircle className="w-6 h-6" />
+
+            <CartDrawer />
+
+            {isAuthenticated ? (
+              <Link to="/profile">
+                <Button variant="ghost" size="icon" className="group">
+                  <User className="h-5 w-5 group-hover:text-primary transition-colors" />
+                </Button>
               </Link>
-            </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="default" size="sm" className="ml-2">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
