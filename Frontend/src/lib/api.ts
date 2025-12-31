@@ -59,6 +59,34 @@ export const productApi = {
         const data = await response.json();
         return data.product;
     },
+
+    // Get products by seller email
+    getBySellerEmail: async (email: string): Promise<Product[]> => {
+        const response = await fetch(`${API_BASE_URL}/products/seller/${encodeURIComponent(email)}`);
+        if (!response.ok) throw new Error("Failed to fetch seller products");
+        const data = await response.json();
+        return data.products;
+    },
+
+    // Update product
+    update: async (id: string, product: Partial<Product>): Promise<Product> => {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(product),
+        });
+        if (!response.ok) throw new Error("Failed to update product");
+        const data = await response.json();
+        return data.product;
+    },
+
+    // Delete product
+    delete: async (id: string): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Failed to delete product");
+    },
 };
 
 export const inquiriesApi = {

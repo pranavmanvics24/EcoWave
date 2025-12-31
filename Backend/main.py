@@ -345,5 +345,68 @@ def create_inquiry():
         app.logger.error(f"Error creating inquiry: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route("/api/products/seller/<email>", methods=["GET"])
+def get_products_by_seller(email):
+    """Fetch all products by seller email"""
+    try:
+        products = list(products_col.find({"seller_email": email}, {"_id": 0}).sort("created_at", -1))
+        return jsonify({"success": True, "products": products}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching seller products: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/products/<product_id>", methods=["PUT"])
+def update_product(product_id):
+    """Update an existing product"""
+    try:
+        data = request.get_json()
+        
+        # Get existing product
+        existing_product = products_col.find_one({"id": product_id}, {"_id": 0})
+        if not existing_product:
+            return jsonify({"success": False, "error": "Product not found"}), 404
+        
+        # Prepare update data
+        update_data = {
+            "title": data.get("title", existing_product["title"]),
+            "description": data.get("description", existing_product["description"]),
+            "price": float(data.get("price", existing_product["price"])),
+            "badge": data.get("badge", existing_product["badge"]),
+            "image": data.get("image", existing_product["image"]),
+            "category": data.get("category", existing_product.get("category")),
+            "seller_email": data.get("seller_email", existing_product.get("seller_email", "")),
+            "seller_location": data.get("seller_location", existing_product.get("seller_location", "")),
+            "seller_phone": data.get("seller_phone", existing_product.get("seller_phone", "")),
+            "updated_at": datetime.utcnow()
+        }
+        
+        # Update product
+        products_col.update_one({"id": product_id}, {"$set": update_data})
+        
+        # Get updated product
+        updated_product = products_col.find_one({"id": product_id}, {"_id": 0})
+        
+        return jsonify({"success": True, "product": updated_product}), 200
+    except Exception as e:
+        app.logger.error(f"Error updating product {product_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/products/<product_id>", methods=["DELETE"])
+def delete_product(product_id):
+    """Delete a product"""
+    try:
+        # Check if product exists
+        product = products_col.find_one({"id": product_id}, {"_id": 0})
+        if not product:
+            return jsonify({"success": False, "error": "Product not found"}), 404
+        
+        # Delete product
+        products_col.delete_one({"id": product_id})
+        
+        return jsonify({"success": True, "message": "Product deleted successfully"}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting product {product_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=PORT, debug=True)
