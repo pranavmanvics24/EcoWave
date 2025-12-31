@@ -26,7 +26,7 @@ const AuthCallback = () => {
                 localStorage.setItem("token", token);
 
                 toast.success("Successfully logged in with Google!");
-                navigate("/");
+                navigate("/home");
             } catch (error) {
                 console.error("Token decode error:", error);
                 toast.error("Failed to process login token");

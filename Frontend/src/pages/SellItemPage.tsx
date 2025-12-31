@@ -49,7 +49,9 @@ export default function SellItemPage() {
                 price: parseFloat(formData.get("price") as string),
                 badge: condition === "new" ? "New" : "Used",
                 image: imageUrl,
-                category: category // Note: We might want to add category to backend schema later
+                category: category,
+                seller_email: formData.get("contact") as string,
+                seller_location: formData.get("location") as string,
             });
         } catch (error) {
             console.error("Error submitting form:", error);

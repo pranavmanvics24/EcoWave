@@ -10,14 +10,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api";
 import { useSearchParams } from "react-router-dom";
-
-import { useCartStore } from "@/lib/store";
+import ContactSellerDialog from "@/components/ContactSellerDialog";
 
 const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const addItem = useCartStore((state) => state.addItem);
 
   const currentCategory = searchParams.get("category") || "all";
   const currentSearch = searchParams.get("search") || "";
@@ -32,12 +31,10 @@ const Home = () => {
     setIsDialogOpen(true);
   };
 
-  const handleBuyNow = (product) => {
+  const handleContactSeller = (product) => {
+    setSelectedProduct(product);
     setIsDialogOpen(false);
-    addItem(product);
-    toast.success(`Added ${product.title} to cart!`, {
-      description: "Check the cart to proceed to checkout"
-    });
+    setIsContactDialogOpen(true);
   };
 
   const handleSearch = (query) => {
@@ -194,7 +191,7 @@ const Home = () => {
                     price={product.price}
                     badge={product.badge}
                     onClick={() => handleProductClick(product)}
-                    onBuyNow={() => handleBuyNow(product)}
+                    onBuyNow={() => handleContactSeller(product)}
                   />
                 ))}
               </div>
@@ -269,9 +266,9 @@ const Home = () => {
                   <div className="flex gap-3 pt-4">
                     <Button
                       className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                      onClick={() => handleBuyNow(selectedProduct)}
+                      onClick={() => handleContactSeller(selectedProduct)}
                     >
-                      Add to Cart
+                      Contact Seller
                     </Button>
                     <Button
                       variant="outline"
@@ -287,6 +284,15 @@ const Home = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Contact Seller Dialog */}
+      {selectedProduct && (
+        <ContactSellerDialog
+          open={isContactDialogOpen}
+          onOpenChange={setIsContactDialogOpen}
+          product={selectedProduct}
+        />
+      )}
     </div>
   );
 };

@@ -9,7 +9,22 @@ export interface Product {
     image: string;
     category?: string;
     seller_id?: string;
+    seller_email?: string;
+    seller_location?: string;
+    seller_phone?: string;
     created_at?: string;
+}
+
+export interface Inquiry {
+    inquiry_id: string;
+    product_id: string;
+    product_title: string;
+    buyer_name: string;
+    buyer_email: string;
+    buyer_message: string;
+    seller_email: string;
+    status: string;
+    created_at: string;
 }
 
 export const productApi = {
@@ -45,3 +60,26 @@ export const productApi = {
         return data.product;
     },
 };
+
+export const inquiriesApi = {
+    // Submit inquiry to seller
+    create: async (inquiry: {
+        product_id: string;
+        buyer_name: string;
+        buyer_email: string;
+        buyer_message: string;
+    }): Promise<{ inquiry: Inquiry; email_sent: boolean }> => {
+        const response = await fetch(`${API_BASE_URL}/inquiries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(inquiry),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to submit inquiry");
+        }
+        const data = await response.json();
+        return { inquiry: data.inquiry, email_sent: data.email_sent };
+    },
+};
+

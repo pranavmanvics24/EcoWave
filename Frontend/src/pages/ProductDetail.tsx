@@ -1,72 +1,132 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-
-// Mock product data (replace with real API call)
-const mockProduct = {
-    id: 1,
-    name: "Vintage Leather Jacket",
-    image: "data:image/webp;base64,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",
-    description: "A stylish vintage leather jacket in excellent condition. Perfect for any season.",
-    reviews: [
-        { id: 1, user: "Ram", comment: "Great quality and fast shipping!" },
-        { id: 2, user: "Kumar", comment: "Love the look and feel of this jacket." },
-    ],
-};
+import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { productApi } from "@/lib/api";
+import ContactSellerDialog from "@/components/ContactSellerDialog";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProductDetail() {
     const { id } = useParams();
-    const [product, setProduct] = useState(mockProduct);
+    const navigate = useNavigate();
+    const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
-    // In a real app, fetch product data by id here
-    useEffect(() => {
-        // fetchProduct(id).then(setProduct);
-    }, [id]);
+    const { data: product, isLoading, error } = useQuery({
+        queryKey: ['product', id],
+        queryFn: () => productApi.getById(id!),
+        enabled: !!id,
+    });
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error || !product) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <p className="text-xl text-red-500">Product not found</p>
+                <Button onClick={() => navigate("/home")}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Home
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <Button
+                variant="ghost"
+                onClick={() => navigate("/home")}
+                className="mb-4"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Products
+            </Button>
+
             <Card className="max-w-3xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                        {product.name}
-                    </CardTitle>
+                    <div className="flex items-start justify-between">
+                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                            {product.title}
+                        </CardTitle>
+                        <Badge className="bg-secondary/10 text-secondary hover:bg-secondary/20">
+                            {product.badge}
+                        </Badge>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex justify-center">
                         <img
-                            src={product.image}
-                            alt={product.name}
+                            src={product.image || "/placeholder.jpg"}
+                            alt={product.title}
                             className="rounded-lg shadow-md max-w-full h-auto"
                         />
                     </div>
+
                     <div>
-                        <h3 className="text-lg font-semibold">Description</h3>
-                        <p className="text-muted-foreground">{product.description}</p>
+                        <h3 className="text-lg font-semibold mb-2">Description</h3>
+                        <p className="text-muted-foreground leading-relaxed">{product.description}</p>
                     </div>
+
                     <div>
-                        <h3 className="text-lg font-semibold">Reviews</h3>
-                        <div className="space-y-4 mt-4">
-                            {product.reviews.map((review) => (
-                                <Card key={review.id} className="p-4">
-                                    <div className="flex justify-between">
-                                        <span className="font-medium">{review.user}</span>
-                                    </div>
-                                    <p className="mt-2 text-muted-foreground">{review.comment}</p>
-                                </Card>
-                            ))}
+                        <h3 className="text-lg font-semibold mb-2">Price</h3>
+                        <p className="text-3xl font-bold text-primary">₹{product.price}</p>
+                    </div>
+
+                    {product.seller_location && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-2">Location</h3>
+                            <p className="text-muted-foreground">{product.seller_location}</p>
                         </div>
-                    </div>
-                    <div className="flex justify-center gap-10">
-                        <Button className="w-full hover:opacity-90" variant="outline">
-                            Add to Cart
+                    )}
+
+                    {product.category && (
+                        <div>
+                            <h3 className="text-lg font-semibold mb-2">Category</h3>
+                            <Badge variant="outline" className="text-sm">
+                                {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+                            </Badge>
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                            onClick={() => setIsContactDialogOpen(true)}
+                            disabled={!product.seller_email}
+                        >
+                            Contact Seller
                         </Button>
-                        <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-                            Buy Now
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate("/home")}
+                        >
+                            Browse More
                         </Button>
                     </div>
+
+                    {!product.seller_email && (
+                        <p className="text-sm text-amber-600 text-center">
+                            Contact information not available for this listing
+                        </p>
+                    )}
                 </CardContent>
             </Card>
+
+            {product && (
+                <ContactSellerDialog
+                    open={isContactDialogOpen}
+                    onOpenChange={setIsContactDialogOpen}
+                    product={product}
+                />
+            )}
         </div>
     );
 }

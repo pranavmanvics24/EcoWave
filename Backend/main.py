@@ -16,15 +16,25 @@ from authlib.integrations.flask_client import OAuth
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from dateutil.relativedelta import relativedelta
-import certifi 
+import certifi
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import uuid 
 
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
 JWT_SECRET = os.getenv("SECRET_KEY", "dev_jwt_secret")
 JWT_EXP_SECONDS = int(os.getenv("JWT_EXP_SECONDS", 86400))
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:8080")
-PORT = int(os.getenv("PORT", 5000))
+PORT = int(os.getenv("PORT", 5001))
+
+# SMTP Configuration
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
 app = Flask(__name__)
 # Allow all origins for development to avoid CORS issues
@@ -32,16 +42,26 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.secret_key = JWT_SECRET
 
 
-client = MongoClient(
-    MONGODB_URI, 
-    tls=True, 
-    tlsAllowInvalidCertificates=False,
-    tlsCAFile=certifi.where()
-)
+# Detect if MongoDB is local or remote (Atlas) and configure SSL accordingly
+is_local_mongo = "localhost" in MONGODB_URI or "127.0.0.1" in MONGODB_URI
+
+if is_local_mongo:
+    # Local MongoDB - no SSL
+    client = MongoClient(MONGODB_URI)
+else:
+    # Remote MongoDB (Atlas) - use SSL
+    client = MongoClient(
+        MONGODB_URI, 
+        tls=True, 
+        tlsAllowInvalidCertificates=False,
+        tlsCAFile=certifi.where()
+    )
 db = client['userinfo']
 users_col = db['users']
 products_col = db['products']
+inquiries_col = db['inquiries']
 products_col.create_index([("created_at", ASCENDING)])
+inquiries_col.create_index([("created_at", ASCENDING)])
 
 oauth = OAuth(app)
 
@@ -136,6 +156,60 @@ def auth_google_callback():
     redirect_url = FRONTEND_ORIGIN.rstrip("/") + "/auth-callback?token=" + urllib_parse.quote(jwt_token)
     return redirect(redirect_url)
 
+# Email sending function
+def send_inquiry_email(seller_email: str, product_title: str, buyer_name: str, buyer_email: str, buyer_message: str) -> bool:
+    """Send email notification to seller about buyer inquiry"""
+    if not SMTP_EMAIL or not SMTP_PASSWORD:
+        app.logger.warning("SMTP credentials not configured, skipping email")
+        return False
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"EcoWave: Inquiry about '{product_title}'"
+        msg['From'] = SMTP_EMAIL
+        msg['To'] = seller_email
+        
+        # Create email body
+        html = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+              <h2 style="color: #10b981;">New Inquiry on EcoWave! 🌊</h2>
+              <p>Someone is interested in your listing: <strong>{product_title}</strong></p>
+              
+              <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Buyer Details:</h3>
+                <p><strong>Name:</strong> {buyer_name}</p>
+                <p><strong>Email:</strong> <a href="mailto:{buyer_email}">{buyer_email}</a></p>
+                
+                <h3>Message:</h3>
+                <p style="background-color: #f3f4f6; padding: 15px; border-radius: 4px;">{buyer_message}</p>
+              </div>
+              
+              <p>You can reply directly to <a href="mailto:{buyer_email}">{buyer_email}</a> to connect with this buyer.</p>
+              
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+              <p style="font-size: 12px; color: #6b7280;">This is an automated message from EcoWave Marketplace.</p>
+            </div>
+          </body>
+        </html>
+        """
+        
+        part = MIMEText(html, 'html')
+        msg.attach(part)
+        
+        # Send email
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_EMAIL, SMTP_PASSWORD)
+            server.send_message(msg)
+        
+        app.logger.info(f"Email sent successfully to {seller_email}")
+        return True
+    except Exception as e:
+        app.logger.error(f"Failed to send email: {e}")
+        return False
+
 # Product API Endpoints
 @app.route("/api/products", methods=["GET"])
 def get_products():
@@ -199,6 +273,9 @@ def create_product():
             "image": data["image"],
             "category": data.get("category"),
             "seller_id": data.get("seller_id", "anonymous"),
+            "seller_email": data.get("seller_email", ""),
+            "seller_location": data.get("seller_location", ""),
+            "seller_phone": data.get("seller_phone", ""),
             "created_at": datetime.utcnow(),
             "status": "active"
         }
@@ -209,6 +286,63 @@ def create_product():
         return jsonify({"success": True, "product": product}), 201
     except Exception as e:
         app.logger.error(f"Error creating product: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/inquiries", methods=["POST"])
+def create_inquiry():
+    """Handle buyer inquiry about a product"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ["product_id", "buyer_name", "buyer_email", "buyer_message"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Missing field: {field}"}), 400
+        
+        # Get product details
+        product = products_col.find_one({"id": data["product_id"]}, {"_id": 0})
+        if not product:
+            return jsonify({"success": False, "error": "Product not found"}), 404
+        
+        if not product.get("seller_email"):
+            return jsonify({"success": False, "error": "Seller contact information not available"}), 400
+        
+        # Create inquiry record
+        inquiry_id = str(uuid.uuid4())
+        inquiry = {
+            "inquiry_id": inquiry_id,
+            "product_id": data["product_id"],
+            "product_title": product["title"],
+            "buyer_name": data["buyer_name"],
+            "buyer_email": data["buyer_email"],
+            "buyer_message": data["buyer_message"],
+            "seller_email": product["seller_email"],
+            "status": "sent",
+            "created_at": datetime.utcnow()
+        }
+        
+        # Save to database
+        inquiries_col.insert_one(inquiry)
+        
+        # Send email to seller
+        email_sent = send_inquiry_email(
+            seller_email=product["seller_email"],
+            product_title=product["title"],
+            buyer_name=data["buyer_name"],
+            buyer_email=data["buyer_email"],
+            buyer_message=data["buyer_message"]
+        )
+        
+        inquiry.pop("_id", None)  # Remove MongoDB _id from response
+        
+        return jsonify({
+            "success": True,
+            "inquiry": inquiry,
+            "email_sent": email_sent
+        }), 201
+    except Exception as e:
+        app.logger.error(f"Error creating inquiry: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
