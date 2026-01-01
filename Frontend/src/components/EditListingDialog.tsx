@@ -28,6 +28,8 @@ export default function EditListingDialog({ product, open, onOpenChange, sellerE
         condition: product.badge === "New" ? "new" : "used",
         location: product.seller_location || "",
     });
+    const [imagePreview, setImagePreview] = useState<string>(product.image || "");
+    const [newImageBase64, setNewImageBase64] = useState<string>("");
 
     useEffect(() => {
         setFormData({
@@ -38,6 +40,8 @@ export default function EditListingDialog({ product, open, onOpenChange, sellerE
             condition: product.badge === "New" ? "new" : "used",
             location: product.seller_location || "",
         });
+        setImagePreview(product.image || "");
+        setNewImageBase64("");
     }, [product]);
 
     const updateMutation = useMutation({
@@ -56,17 +60,52 @@ export default function EditListingDialog({ product, open, onOpenChange, sellerE
         },
     });
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error("Please select a valid image file");
+            e.target.value = "";
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size should be less than 5MB");
+            e.target.value = "";
+            return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setImagePreview(result);
+            setNewImageBase64(result);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        updateMutation.mutate({
+        const updateData: Partial<Product> = {
             title: formData.title,
             description: formData.description,
             price: parseFloat(formData.price),
             badge: formData.condition === "new" ? "New" : "Used",
             category: formData.category,
             seller_location: formData.location,
-        });
+        };
+
+        // Only update image if a new one was selected
+        if (newImageBase64) {
+            updateData.image = newImageBase64;
+        }
+
+        updateMutation.mutate(updateData);
     };
 
     return (
@@ -153,6 +192,39 @@ export default function EditListingDialog({ product, open, onOpenChange, sellerE
                                 </div>
                             </div>
                         </RadioGroup>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-image">Product Image</Label>
+                        {imagePreview && (
+                            <div className="mt-2 relative w-full h-48 border rounded-lg overflow-hidden bg-muted">
+                                <img
+                                    src={imagePreview}
+                                    alt="Product preview"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                            <Button asChild variant="outline" type="button" disabled={updateMutation.isPending}>
+                                <label htmlFor="edit-image" className="cursor-pointer">
+                                    Change Image
+                                </label>
+                            </Button>
+                            <Input
+                                name="image"
+                                id="edit-image"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={updateMutation.isPending}
+                                onChange={handleImageChange}
+                            />
+                            {newImageBase64 && (
+                                <span className="text-sm text-muted-foreground">New image selected ✓</span>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Leave unchanged to keep current image. Max size: 5MB</p>
                     </div>
 
                     <div className="space-y-2">

@@ -17,6 +17,8 @@ export default function SellItemPage() {
     const [category, setCategory] = useState("");
     const [condition, setCondition] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string>("");
+    const [imageBase64, setImageBase64] = useState<string>("");
 
     const createProductMutation = useMutation({
         mutationFn: productApi.create,
@@ -31,16 +33,49 @@ export default function SellItemPage() {
         },
     });
 
-    const handleSubmit = async (e) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            setImagePreview("");
+            setImageBase64("");
+            return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error("Please select a valid image file");
+            e.target.value = "";
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size should be less than 5MB");
+            e.target.value = "";
+            return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result as string;
+            setImagePreview(result);
+            setImageBase64(result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (!imageBase64) {
+            toast.error("Please select an image for your product");
+            return;
+        }
+
         setIsLoading(true);
 
-        const formData = new FormData(e.target);
-
-        // In a real app, you'd upload the image to a storage service here
-        // For now, we'll use a placeholder or the file name if provided
-        const imageFile = formData.get("images") as File;
-        const imageUrl = imageFile && imageFile.name ? `/placeholder.jpg` : `/placeholder.jpg`;
+        const formData = new FormData(e.target as HTMLFormElement);
 
         try {
             await createProductMutation.mutateAsync({
@@ -48,7 +83,7 @@ export default function SellItemPage() {
                 description: formData.get("description") as string,
                 price: parseFloat(formData.get("price") as string),
                 badge: condition === "new" ? "New" : "Used",
-                image: imageUrl,
+                image: imageBase64,
                 category: category,
                 seller_email: formData.get("contact") as string,
                 seller_location: formData.get("location") as string,
@@ -131,15 +166,37 @@ export default function SellItemPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="images">Upload Images</Label>
-                                <div className="flex items-center">
+                                <Label htmlFor="images">Upload Image *</Label>
+                                {imagePreview && (
+                                    <div className="mt-2 relative w-full h-48 border rounded-lg overflow-hidden bg-muted">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2">
                                     <Button asChild variant="outline" type="button" disabled={isLoading}>
                                         <label htmlFor="images" className="cursor-pointer">
-                                            Choose Files
+                                            {imagePreview ? "Change Image" : "Choose Image"}
                                         </label>
                                     </Button>
-                                    <Input name="images" id="images" type="file" multiple className="hidden" disabled={isLoading} />
+                                    <Input
+                                        name="images"
+                                        id="images"
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={isLoading}
+                                        onChange={handleImageChange}
+                                        required
+                                    />
+                                    {imagePreview && (
+                                        <span className="text-sm text-muted-foreground">Image selected ✓</span>
+                                    )}
                                 </div>
+                                <p className="text-xs text-muted-foreground">Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</p>
                             </div>
 
                             <div className="space-y-2">
