@@ -1,0 +1,10 @@
+flask
+flask-cors
+pymongo
+python-dotenv
+pyjwt
+authlib
+requests
+python-dateutil
+certifi
+gunicorn

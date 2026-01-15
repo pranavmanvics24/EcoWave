@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5001/api";
+const API_BASE_URL = import.meta.env.VITE_API_ORIGIN || "http://localhost:5001/api";
 
 export interface ImpactStats {
     co2_saved: number;
@@ -107,7 +107,7 @@ export const productApi = {
     markSold: async (id: string, buyerEmail: string, token: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/products/${id}/sold`, {
             method: "POST",
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
@@ -123,7 +123,7 @@ export const productApi = {
 export const userApi = {
     getImpactStats: async (token: string): Promise<ImpactStats> => {
         const response = await fetch(`${API_BASE_URL}/user/impact`, {
-            headers: { 
+            headers: {
                 "Authorization": `Bearer ${token}`
             }
         });

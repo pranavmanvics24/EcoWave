@@ -12,7 +12,6 @@ from pymongo import MongoClient, ASCENDING
 from dotenv import load_dotenv
 import jwt
 from authlib.integrations.flask_client import OAuth
-# from SentimentPredictor import SentimentPredictor  # Not needed for products
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from dateutil.relativedelta import relativedelta
