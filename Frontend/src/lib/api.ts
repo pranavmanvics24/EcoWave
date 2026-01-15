@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_ORIGIN || "http://localhost:5001/api";
+const API_BASE_URL = import.meta.env.VITE_API_ORIGIN;
 
 export interface ImpactStats {
     co2_saved: number;
