@@ -32,11 +32,7 @@ const Login = () => {
     navigate("/home");
   };
 
-  const handleAdminLogin = () => {
-    toast.info("Admin login", {
-      description: "Redirecting to admin portal..."
-    });
-  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent via-background to-muted p-4">
@@ -132,13 +128,7 @@ const Login = () => {
               </Link>
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleAdminLogin}
-            >
-              Admin Login
-            </Button>
+
           </CardFooter>
         </Card>
       </div>
