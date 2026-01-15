@@ -11,12 +11,14 @@ import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api";
 import { useSearchParams } from "react-router-dom";
 import ContactSellerDialog from "@/components/ContactSellerDialog";
+import { useCartStore } from "@/lib/store";
 
 const Home = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const addToCart = useCartStore((state) => state.addItem);
 
   const currentCategory = searchParams.get("category") || "all";
   const currentSearch = searchParams.get("search") || "";
@@ -192,6 +194,10 @@ const Home = () => {
                     badge={product.badge}
                     onClick={() => handleProductClick(product)}
                     onBuyNow={() => handleContactSeller(product)}
+                    onAddToCart={() => {
+                      addToCart(product);
+                      toast.success(`${product.title} added to cart!`);
+                    }}
                   />
                 ))}
               </div>
