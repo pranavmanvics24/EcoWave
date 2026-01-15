@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_ORIGIN;
+const API_BASE_URL = import.meta.env.VITE_API_ORIGIN || "http://localhost:5001/api";
 export const GOOGLE_AUTH_URL = API_BASE_URL ? API_BASE_URL.replace('/api', '') + "/auth/google" : "http://localhost:5001/auth/google";
 
 export interface ImpactStats {
