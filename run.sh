@@ -19,7 +19,7 @@ BACKEND_PID=$!
 cd ..
 
 # Wait for backend to be ready (simple sleep)
-sleep 2
+sleep 2 
 
 # Start Frontend
 echo "Starting Frontend..."

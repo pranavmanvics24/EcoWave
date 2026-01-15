@@ -38,11 +38,6 @@ const Landing = () => {
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Link to="/home">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    Learn More
-                  </Button>
-                </Link>
               </div>
 
               <div className="grid grid-cols-3 gap-4 pt-8">
