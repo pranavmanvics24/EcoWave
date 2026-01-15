@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ShoppingCart } from "lucide-react";
 
-const ProductCard = ({ image, title, price, badge, onClick, onBuyNow }) => {
+const ProductCard = ({ image, title, price, badge, onClick, onBuyNow, onAddToCart }) => {
   return (
     <Card
       className="overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
@@ -24,9 +25,20 @@ const ProductCard = ({ image, title, price, badge, onClick, onBuyNow }) => {
         <h3 className="font-semibold text-lg mb-2 text-foreground">{title}</h3>
         <p className="text-2xl font-bold text-primary">₹{price}</p>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 gap-2">
         <Button
-          className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+          variant="outline"
+          size="icon"
+          className="shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart();
+          }}
+        >
+          <ShoppingCart className="h-4 w-4" />
+        </Button>
+        <Button
+          className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
           onClick={(e) => {
             e.stopPropagation();
             onBuyNow();
