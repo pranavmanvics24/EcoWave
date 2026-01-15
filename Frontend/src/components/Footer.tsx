@@ -13,19 +13,19 @@ const Footer = () => {
               EcoWave
             </span>
           </div>
-          
+
           <p className="text-muted-foreground max-w-md">
             Join the movement for a greener planet. Together, we can make a difference.
           </p>
-          
+
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Made with</span>
             <Heart className="h-4 w-4 text-secondary fill-secondary" />
             <span>for the planet</span>
           </div>
-          
+
           <p className="text-xs text-muted-foreground">
-            © 2024 EcoWave. All rights reserved.
+            © 2026 EcoWave. All rights reserved.
           </p>
         </div>
       </div>

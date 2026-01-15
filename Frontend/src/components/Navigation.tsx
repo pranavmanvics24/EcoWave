@@ -40,7 +40,7 @@ const Navigation = ({ onSearch }) => {
     <nav className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-background/95">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to={isAuthenticated ? "/home" : "/"} className="flex items-center gap-2 group">
             <div className="bg-gradient-to-br from-primary to-secondary p-2 rounded-lg group-hover:scale-110 transition-transform">
               <Waves className="h-6 w-6 text-primary-foreground" />
             </div>
