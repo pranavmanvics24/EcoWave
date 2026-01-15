@@ -1,5 +1,13 @@
 const API_BASE_URL = "http://localhost:5001/api";
 
+export interface ImpactStats {
+    co2_saved: number;
+    water_saved: number;
+    waste_saved: number;
+    items_recycled: number;
+    items_purchased: number;
+}
+
 export interface Product {
     id: string;
     title: string;
@@ -8,11 +16,18 @@ export interface Product {
     badge: string;
     image: string;
     category?: string;
+    material?: string;
+    eco_impact?: {
+        co2: number;
+        water: number;
+        waste: number;
+    };
     seller_id?: string;
     seller_email?: string;
     seller_location?: string;
     seller_phone?: string;
     created_at?: string;
+    status?: string;
 }
 
 export interface Inquiry {
@@ -87,6 +102,35 @@ export const productApi = {
         });
         if (!response.ok) throw new Error("Failed to delete product");
     },
+
+    // Mark product as sold
+    markSold: async (id: string, buyerEmail: string, token: string): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}/products/${id}/sold`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ buyer_email: buyerEmail }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to mark product as sold");
+        }
+    },
+};
+
+export const userApi = {
+    getImpactStats: async (token: string): Promise<ImpactStats> => {
+        const response = await fetch(`${API_BASE_URL}/user/impact`, {
+            headers: { 
+                "Authorization": `Bearer ${token}`
+            }
+        });
+        if (!response.ok) throw new Error("Failed to fetch impact stats");
+        const data = await response.json();
+        return data.impact;
+    }
 };
 
 export const inquiriesApi = {

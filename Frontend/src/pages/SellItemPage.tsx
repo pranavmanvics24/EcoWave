@@ -16,6 +16,7 @@ export default function SellItemPage() {
     const queryClient = useQueryClient();
     const [category, setCategory] = useState("");
     const [condition, setCondition] = useState("");
+    const [material, setMaterial] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [imagePreview, setImagePreview] = useState<string>("");
     const [imageBase64, setImageBase64] = useState<string>("");
@@ -85,6 +86,7 @@ export default function SellItemPage() {
                 badge: condition === "new" ? "New" : "Used",
                 image: imageBase64,
                 category: category,
+                material: material,
                 seller_email: formData.get("contact") as string,
                 seller_location: formData.get("location") as string,
             });
@@ -128,6 +130,24 @@ export default function SellItemPage() {
                                         <SelectItem value="home">Home</SelectItem>
                                         <SelectItem value="accessories">Accessories</SelectItem>
                                         <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="material">Material</Label>
+                                <Select onValueChange={setMaterial} value={material} disabled={isLoading}>
+                                    <SelectTrigger id="material">
+                                        <SelectValue placeholder="Select primary material" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cotton">Cotton</SelectItem>
+                                        <SelectItem value="polyester">Polyester/Synthetic</SelectItem>
+                                        <SelectItem value="wood">Wood</SelectItem>
+                                        <SelectItem value="metal">Metal</SelectItem>
+                                        <SelectItem value="plastic">Plastic</SelectItem>
+                                        <SelectItem value="glass">Glass</SelectItem>
+                                        <SelectItem value="other">Other/Mixed</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

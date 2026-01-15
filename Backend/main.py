@@ -63,6 +63,48 @@ inquiries_col = db['inquiries']
 products_col.create_index([("created_at", ASCENDING)])
 inquiries_col.create_index([("created_at", ASCENDING)])
 
+# Impact Metrics Constants
+IMPACT_METRICS = {
+    "electronics": {"co2": 50.0, "water": 100.0, "waste": 1.5},
+    "clothing": {"co2": 15.0, "water": 2000.0, "waste": 0.5},
+    "books": {"co2": 2.0, "water": 20.0, "waste": 0.5},
+    "home": {"co2": 25.0, "water": 50.0, "waste": 10.0},
+    "accessories": {"co2": 5.0, "water": 10.0, "waste": 0.2},
+    "other": {"co2": 10.0, "water": 30.0, "waste": 1.0}
+}
+
+def calculate_impact(category, material=None):
+    """Calculate eco impact based on category and material"""
+    base = IMPACT_METRICS.get(category.lower(), IMPACT_METRICS["other"])
+    return base
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header:
+            try:
+                token = auth_header.split(" ")[1]
+            except IndexError:
+                return jsonify({'message': 'Token is missing!'}), 401
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+            
+        try:
+            data = jwt.decode(token, app.secret_key, algorithms=["HS256"])
+            current_user = users_col.find_one({"email": data['email']})
+            if not current_user:
+                return jsonify({'message': 'User not found!'}), 401
+        except Exception as e:
+            return jsonify({'message': 'Token is invalid!', 'error': str(e)}), 401
+            
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+
 oauth = OAuth(app)
 
 google = oauth.register(
@@ -272,6 +314,8 @@ def create_product():
             "badge": data["badge"],
             "image": data["image"],
             "category": data.get("category"),
+            "material": data.get("material", ""),
+            "eco_impact": calculate_impact(data.get("category", "other"), data.get("material")),
             "seller_id": data.get("seller_id", "anonymous"),
             "seller_email": data.get("seller_email", ""),
             "seller_location": data.get("seller_location", ""),
@@ -406,6 +450,80 @@ def delete_product(product_id):
         return jsonify({"success": True, "message": "Product deleted successfully"}), 200
     except Exception as e:
         app.logger.error(f"Error deleting product {product_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/user/impact", methods=["GET"])
+@token_required
+def get_user_impact(current_user):
+    """Get impact stats for the logged-in user"""
+    try:
+        impact_stats = current_user.get("impact_stats", {
+            "co2_saved": 0.0,
+            "water_saved": 0.0,
+            "waste_saved": 0.0,
+            "items_recycled": 0,
+            "items_purchased": 0
+        })
+        return jsonify({"success": True, "impact": impact_stats}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching user impact: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/products/<product_id>/sold", methods=["POST"])
+@token_required
+def mark_product_sold(current_user, product_id):
+    """Mark a product as sold and credit impact to buyer/seller"""
+    try:
+        data = request.get_json()
+        buyer_email = data.get("buyer_email")
+        
+        product = products_col.find_one({"id": product_id})
+        if not product:
+            return jsonify({"success": False, "error": "Product not found"}), 404
+            
+        # Verify ownership
+        if product.get("seller_email") != current_user["email"]:
+            return jsonify({"success": False, "error": "Unauthorized"}), 403
+            
+        if product.get("status") == "sold":
+             return jsonify({"success": False, "error": "Product already sold"}), 400
+
+        # Update product status
+        products_col.update_one({"id": product_id}, {"$set": {"status": "sold", "buyer_email": buyer_email}})
+        
+        # Credit Impact
+        impact = product.get("eco_impact", {})
+        co2 = impact.get("co2", 0)
+        water = impact.get("water", 0)
+        waste = impact.get("waste", 0)
+        
+        # Update Seller Stats
+        users_col.update_one(
+            {"email": current_user["email"]},
+            {"$inc": {
+                "impact_stats.co2_saved": co2,
+                "impact_stats.water_saved": water,
+                "impact_stats.waste_saved": waste,
+                "impact_stats.items_recycled": 1
+            }}
+        )
+        
+        # Update Buyer Stats if email provided
+        if buyer_email:
+            users_col.update_one(
+                {"email": buyer_email},
+                {"$inc": {
+                    "impact_stats.co2_saved": co2,
+                    "impact_stats.water_saved": water,
+                    "impact_stats.waste_saved": waste,
+                    "impact_stats.items_purchased": 1
+                }}
+            )
+            
+        return jsonify({"success": True, "message": "Product marked as sold"}), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error marking product sold: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
